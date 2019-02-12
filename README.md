@@ -1,35 +1,83 @@
 {:.warning}
 > ### WARNING
-> orjail is under development, use at your own risk.  
-> if you find a bug, please create an [issue](https://github.com/orjail/orjail/issues).
+> Security isn’t just about the tools you use or the software you download. It begins with understanding the unique threats you face and how you can counter those threats.
 
-## why?
-we've tried to deanonimize a program executed in torsocks environment and that was not so difficult as torsocks use LD_PRELOAD, so you only need to statically compile your stuff.
-as [whonix](https://www.whonix.org/) is sometimes too much, the idea is to experiment with [linux namespaces](http://man7.org/linux/man-pages/man7/namespaces.7.html) and learn by doing something usefull (at least for us).
-
-## requirements
-1. a linux kernel supporting namespaces (you have it since 2008)
-1. tor installed
-1. [firejail](https://firejail.wordpress.com/) (optional)
+# orjail
+**orjail** is a tool that let you create a jail around a program to force it's network traffic through tor [Tor](https://www.torproject.org/). 
+It creates a hostile environment for anything trying to discover your real IP address.
 
 
-## how it works
-it creates a separated network namespace (using `ip netns`) with its own network
+## Install
+##### From source
+```
+git clone https://github.com/orjail/orjail.git
+cd orjail
+sudo make install
+```
+##### Debian / Ubuntu
+We provide a `.deb` package you can download from
+[here](https://github.com/orjail/orjail/releases/latest) and install with a
+simple:
+
+
+```
+sudo dpkg -i orjail*.deb
+```
+
+## Why?
+We've tried to deanonimize a program executed in torsocks environment and that was not so difficult as torsocks use LD_PRELOAD, so you only need to statically compile your stuff.
+as [whonix](https://www.whonix.org/) is sometimes too much, the idea is to experiment with [linux namespaces](http://man7.org/linux/man-pages/man7/namespaces.7.html) and learn by doing something useful (at least for us).
+
+## Requirements
+1. linux kernel supporting namespaces (you have it since 2008)
+1. Tor installed
+1. [firejail](https://firejail.wordpress.com/) (optional, but really suggested)
+
+
+## How it works
+It creates a separated [network namespace](https://en.wikipedia.org/wiki/Linux_namespaces#Network_(net)) (using `ip netns`) with its own network
 interface and a link to the host interface with some iptables rules (on host)
-that force traffic generated from inside orjail to only exit via tor (including dns).  
-inside orjail you'll be in another pid namespace (this way you cannot switch
-namespace), and another mount namespace (we use this to show a different /etc/resolv.conf).  
+that force traffic generated from inside orjail to only exit via Tor (including DNS).  
+Inside **orjail** you'll be in another pid namespace (try `sudo orjail ps aux`) and another mount namespace (we use this to show a different /etc/resolv.conf).  
 
 **if you find a way to deanonimize a program running inside orjail** (also a shell with root privileges) would be nice to [share it with us](https://github.com/orjail/orjail/issues)
 
+## Additional info
+- orjail needs root permission to run
+- orjail runs your command as your user
+- orjail will launch a Tor instance bound to orjail interface
 
-## additional info
-1. `orjail` needs root permission to run
-1. `orjail` runs your program as your user
-1. `orjail` will launch a tor instance bound to orjail interface
+## Usage
+> ```bash
+> orjail [options] [command]
+> ```
+> **-u, --user** \<user>  
+> Run command as \<user> (default **$USER**)
+>
+> **-f, --firejail**  
+> Use [firejail](https://firejail.wordpress.com) as a security container
+>
+> **--firejail-args** "\<args>"  
+> Set arguments to pass to firejail surrounded by quotes.  
+> eg. "--hostname=host --env=PS1=[orjail]"
+>
+>
+> **--host-torrc**  
+> Include your torrc host
+>
+> **-t, --tor-exec** \<torpath>  
+> Select a Tor executable to use. The path can be full, relative or be in $PATH (default **tor**)
+>
+> **-s, --shell**  
+> Execute a shell (default **$SHELL**)
+>
+>
+> **-k, --keep**  
+> Don't delete namespace and don't kill tor after the execution.
+>
+> **-n, --name <name>**  
+> Set a custom namespace name (default **orjail**)
 
-
-## usage examples: 
 
 #### an example to see what are we talking about (try yourself with ps aux, ls)
 ```
